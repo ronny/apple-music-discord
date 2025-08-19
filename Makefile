@@ -1,8 +1,5 @@
-presence:
+default:
 	zig build
-
-presence_c:
-	clang -framework Foundation -framework ScriptingBridge -o $@ main.c MusicScriptingBridge.m
 
 Music.h:
 	# Both sdef and sdp require Xcode (CommandLineTools only won't work)

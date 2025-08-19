@@ -3,6 +3,7 @@ const print = std.debug.print;
 const musicScriptingBridge = @cImport({
     @cInclude("MusicScriptingBridge.h");
 });
+const Discord = @import("discord_bridge.zig").Discord;
 
 const Config = struct {
     polling_interval_ms: u32 = 500,
@@ -151,12 +152,32 @@ pub fn main() !void {
     print("Press Ctrl+C to exit. Change tracks to test detection.\n", .{});
     print("Polling interval: {}ms\n\n", .{config.polling_interval_ms});
 
+    // Initialize Discord client
+    // Use your application's client ID from Discord Developer Portal
+    const discord_client_id: i64 = 1377596915675562064;
+    var discord = Discord.init(allocator, discord_client_id) catch |err| {
+        print("❌ ERROR: Failed to initialize Discord client: {}\n", .{err});
+        print("🔍 Make sure Discord.app is running\n", .{});
+        print("🔍 Make sure the Discord Social SDK application ID is correct\n", .{});
+        std.process.exit(1);
+    };
+    defer discord.deinit();
+
     var lastTitle: ?[]const u8 = null;
+    var lastState: ?[]const u8 = null;
 
     while (true) {
         // Check if Music app is running
         if (musicScriptingBridge.isMusicAppRunning() == 0) {
-            print("⏸️  Apple Music is not running\n", .{});
+            if (lastTitle != null) {
+                print("⏸️  Apple Music is not running\n", .{});
+                discord.clearActivity() catch {};
+                if (lastTitle) |title| allocator.free(title);
+                lastTitle = null;
+                if (lastState) |old_state| allocator.free(old_state);
+                lastState = null;
+            }
+            discord.runCallbacks();
             std.time.sleep(2 * std.time.ns_per_s); // Wait 2 seconds
             continue;
         }
@@ -168,19 +189,27 @@ pub fn main() !void {
         if (track.isValid == 0) {
             if (lastTitle != null) {
                 print("⏹️  No track loaded\n", .{});
+                discord.clearActivity() catch {};
                 if (lastTitle) |title| allocator.free(title);
                 lastTitle = null;
+                if (lastState) |old_state| allocator.free(old_state);
+                lastState = null;
             }
             std.time.sleep(1 * std.time.ns_per_s);
             continue;
         }
 
-        // Check if track changed
+        // Check if track or state changed
         var currentTitle: ?[]const u8 = null;
         if (track.title) |title| {
             const len = std.mem.len(title);
             currentTitle = allocator.dupe(u8, title[0..len]) catch null;
         }
+        
+        // Get current player state
+        const state: PlayerState = @enumFromInt(musicScriptingBridge.getPlayerState());
+        const currentStateStr = state.toString();
+        const currentState: ?[]const u8 = allocator.dupe(u8, currentStateStr) catch null;
 
         const trackChanged = blk: {
             if (lastTitle == null and currentTitle != null) break :blk true;
@@ -193,13 +222,57 @@ pub fn main() !void {
             }
             break :blk false;
         };
+        
+        const stateChanged = blk: {
+            if (lastState == null and currentState != null) break :blk true;
+            if (lastState != null and currentState == null) break :blk true;
+            if (lastState) |last| {
+                if (currentState) |current| {
+                    break :blk !std.mem.eql(u8, last, current);
+                }
+                break :blk true;
+            }
+            break :blk false;
+        };
 
-        if (trackChanged) {
-            if (lastTitle) |title| allocator.free(title);
-            lastTitle = currentTitle;
-            print("🔄 Track changed: ", .{});
-            printTrackInfo();
+        if (trackChanged or stateChanged) {
+            if (trackChanged) {
+                if (lastTitle) |title| allocator.free(title);
+                lastTitle = currentTitle;
+                print("🔄 Track changed: ", .{});
+                printTrackInfo();
+            } else {
+                // Only state changed
+                if (currentTitle) |title| allocator.free(title);
+                print("🔄 State changed: ", .{});
+                printTrackInfo();
+            }
+            
+            if (lastState) |old_state| allocator.free(old_state);
+            lastState = currentState;
+            
+            // Update Discord activity
+            const title_str = if (track.title) |t| blk: {
+                const len = std.mem.len(t);
+                break :blk t[0..len];
+            } else null;
+            
+            const artist_str = if (track.artist) |a| blk: {
+                const len = std.mem.len(a);
+                break :blk a[0..len];
+            } else null;
+            
+            discord.updateActivity(title_str, artist_str, currentStateStr) catch |err| {
+                print("Warning: Failed to update Discord activity: {}\n", .{err});
+            };
+        } else {
+            // No changes, clean up temporary allocations
+            if (currentTitle) |title| allocator.free(title);
+            if (currentState) |cur_state| allocator.free(cur_state);
         }
+        
+        // Run Discord callbacks to process events
+        discord.runCallbacks();
 
         std.time.sleep(config.polling_interval_ms * std.time.ns_per_ms);
     }

@@ -26,8 +26,8 @@ This is a macOS-only application that listens to Apple Music playback and update
 presence in Discord.app using [Discord Social SDK (Standalone
 C++)](https://discord.com/developers/docs/discord-social-sdk/getting-started/using-c++).
 
-Zig is used as a build tool as well as the main compiler for all Objective-C, C, and C++ code.
-Clang, GCC, and other compilers should be avoided unless absolutely necessary.
+Zig 0.14.x is used as a build tool as well as the main compiler for all Objective-C, C, and C++
+code. Clang, GCC, and other compilers should be avoided unless absolutely necessary.
 
 ### Core Architecture Components
 
@@ -71,9 +71,9 @@ reference only.
 
 ### Discord Integration
 
-The `discord/` directory contains vendored Discord Rich Presence SDK (Standalone C++) files.
+The `discord/` directory contains vendored Discord Social SDK (Standalone C++) files.
 
-Reference: https://discord.com/developers/docs/social-sdk/index.html
+Reference: https://discord.com/developers/docs/discord-social-sdk/index.html
 
 ## Development Notes
 
@@ -82,6 +82,14 @@ Reference: https://discord.com/developers/docs/social-sdk/index.html
 - **Polling is the only working approach** - notification-based approach is deprecated
 - Memory management is handled carefully with proper string cleanup in C bridges
 - Application supports configurable polling intervals via `--interval` CLI flag (default 500ms)
+- **macOS Security**: Discord Social SDK library requires manual approval in System Settings on first run
+
+## Workflow
+
+- Make small incremental changes that can be tested
+- Always accompany code changes with automated tests where possible
+- Prompt to create a jj/git commit when sensible
+- Never run jj or git commands except for querying
 
 ## Testing
 
@@ -107,5 +115,3 @@ zig build test-all  # Run all tests (recommended)
 ```
 
 Tests require Apple Music to be available for full coverage of music bridge functionality.
-
-- jj is used as the main vcs, not git. Never run any vcs command except for querying.

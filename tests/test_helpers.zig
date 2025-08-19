@@ -34,3 +34,4 @@ pub fn validateInterval(interval: u32) u32 {
     }
     return interval;
 }
+
