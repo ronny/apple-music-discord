@@ -4,11 +4,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Common Build Commands
 
+### Building
 - `zig build` - Build the main executable
 - `zig build run` - Build and run the application
 - `make presence` - Alternative build using Makefile (uses zig build, preferred)
 - `make presence_c` - Build C version using clang directly (just for testing)
 - `make Music.h` - Generate Music.h header from Apple Music app (requires Xcode)
+
+### Testing
+- `zig build test-all` - Run all tests (recommended)
+- `zig build test-config` - Run configuration parsing tests
+- `zig build test-music` - Run Apple Music bridge tests
+- `zig build test-integration` - Run integration tests
+- `zig build test` - Run main application tests
 
 The main executable is built as `apple-music-discord-presence` and outputs to `zig-out/bin/`.
 
@@ -40,10 +48,12 @@ Clang, GCC, and other compilers should be avoided unless absolutely necessary.
 main.zig → MusicScriptingBridge → Apple Music ScriptingBridge → Display info
 ```
 
-**Notification Approach (notif.zig)**:
+**Notification Approach (DEPRECATED - moved to attic/legacyNotif/)**:
 ```
 Apple Music → NSDistributedNotificationCenter → MusicPlayerBridge → notif.zig → Display info
 ```
+
+**Note**: The notification approach was found to be non-functional on modern macOS versions. Apple Music does not send the expected distributed notifications, making polling the only viable approach.
 
 ### Key Dependencies
 
@@ -56,6 +66,9 @@ Apple Music → NSDistributedNotificationCenter → MusicPlayerBridge → notif.
 Contains legacy implementations and experiments that are no longer used. They're kept here for
 reference only.
 
+- `attic/legacyNotif/` - Non-functional notification-based approach (notif.zig, MusicPlayerBridge)
+- Other legacy files in various languages (C, Zig experiments)
+
 ### Discord Integration
 
 The `discord/` directory contains vendored Discord Rich Presence SDK (Standalone C++) files.
@@ -66,5 +79,33 @@ Reference: https://discord.com/developers/docs/social-sdk/index.html
 
 - The project requires macOS and XCode to build, and Music.app and Discord.app to run
 - Music.h generation requires full Xcode installation (not just CommandLineTools)
-- Both polling (ScriptingBridge) and event-driven (notifications) approaches are implemented
+- **Polling is the only working approach** - notification-based approach is deprecated
 - Memory management is handled carefully with proper string cleanup in C bridges
+- Application supports configurable polling intervals via `--interval` CLI flag (default 500ms)
+
+## Testing
+
+The project includes a comprehensive test suite covering:
+
+- **Configuration management** - CLI argument parsing, validation, error handling
+- **Apple Music integration** - ScriptingBridge connectivity, track info retrieval
+- **Core application logic** - Track change detection, polling mechanisms
+- **Memory safety** - String handling, resource cleanup, leak prevention
+
+### Test Structure
+
+- `tests/config_test.zig` - Configuration parsing and validation
+- `tests/music_bridge_test.zig` - Objective-C bridge functionality
+- `tests/integration_test.zig` - Core logic and cross-language interop
+- `tests/test_helpers.zig` - Shared utilities and mock objects
+
+### Running Tests
+
+Always run tests before committing changes:
+```bash
+zig build test-all  # Run all tests (recommended)
+```
+
+Tests require Apple Music to be available for full coverage of music bridge functionality.
+
+- jj is used as the main vcs, not git. Never run any vcs command except for querying.

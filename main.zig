@@ -4,6 +4,51 @@ const musicScriptingBridge = @cImport({
     @cInclude("MusicScriptingBridge.h");
 });
 
+const Config = struct {
+    polling_interval_ms: u32 = 500,
+    
+    fn parseArgs(allocator: std.mem.Allocator) !Config {
+        var config = Config{};
+        
+        const args = try std.process.argsAlloc(allocator);
+        defer std.process.argsFree(allocator, args);
+        
+        var i: usize = 1;
+        while (i < args.len) : (i += 1) {
+            const arg = args[i];
+            
+            if (std.mem.eql(u8, arg, "--help") or std.mem.eql(u8, arg, "-h")) {
+                print("Apple Music -> Discord Rich Presence Monitor\n\n", .{});
+                print("Usage: {s} [options]\n\n", .{args[0]});
+                print("Options:\n", .{});
+                print("  --interval, -i <ms>  Polling interval in milliseconds (default: 500)\n", .{});
+                print("  --help, -h           Show this help message\n", .{});
+                std.process.exit(0);
+            } else if (std.mem.eql(u8, arg, "--interval") or std.mem.eql(u8, arg, "-i")) {
+                if (i + 1 >= args.len) {
+                    print("Error: --interval requires a value\n", .{});
+                    std.process.exit(1);
+                }
+                i += 1;
+                config.polling_interval_ms = std.fmt.parseInt(u32, args[i], 10) catch |err| {
+                    print("Error: Invalid interval value '{s}': {}\n", .{ args[i], err });
+                    std.process.exit(1);
+                };
+                if (config.polling_interval_ms < 100) {
+                    print("Warning: Polling interval too low ({}ms), setting to 100ms minimum\n", .{config.polling_interval_ms});
+                    config.polling_interval_ms = 100;
+                }
+            } else {
+                print("Error: Unknown argument '{s}'\n", .{arg});
+                print("Use --help for usage information\n", .{});
+                std.process.exit(1);
+            }
+        }
+        
+        return config;
+    }
+};
+
 const PlayerState = enum(c_int) {
     stopped = 0,
     playing = 1,
@@ -93,11 +138,20 @@ fn printTrackInfo() void {
 }
 
 pub fn main() !void {
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
+    
+    const config = Config.parseArgs(allocator) catch |err| {
+        print("Error parsing arguments: {}\n", .{err});
+        std.process.exit(1);
+    };
+
     print("🎧 Apple Music -> Discord Rich Presence Monitor\n", .{});
-    print("Press Ctrl+C to exit. Change tracks to test detection.\n\n", .{});
+    print("Press Ctrl+C to exit. Change tracks to test detection.\n", .{});
+    print("Polling interval: {}ms\n\n", .{config.polling_interval_ms});
 
     var lastTitle: ?[]const u8 = null;
-    var allocator = std.heap.page_allocator;
 
     while (true) {
         // Check if Music app is running
@@ -147,6 +201,6 @@ pub fn main() !void {
             printTrackInfo();
         }
 
-        std.time.sleep(500 * std.time.ns_per_ms); // Poll every 500ms
+        std.time.sleep(config.polling_interval_ms * std.time.ns_per_ms);
     }
 }
