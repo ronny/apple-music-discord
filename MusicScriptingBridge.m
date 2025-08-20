@@ -30,6 +30,7 @@ void clearTrackCache(void) {
     free(cachedTrackInfo.albumArtist);
     free(cachedTrackInfo.composer);
     free(cachedTrackInfo.genre);
+    free(cachedTrackInfo.persistentID);
     
     memset(&cachedTrackInfo, 0, sizeof(DetailedTrackInfo));
     lastCacheTime = 0.0;
@@ -98,6 +99,7 @@ DetailedTrackInfo getCurrentTrackInfo(void) {
         if (cachedTrackInfo.albumArtist) info.albumArtist = strdup(cachedTrackInfo.albumArtist);
         if (cachedTrackInfo.composer) info.composer = strdup(cachedTrackInfo.composer);
         if (cachedTrackInfo.genre) info.genre = strdup(cachedTrackInfo.genre);
+        if (cachedTrackInfo.persistentID) info.persistentID = strdup(cachedTrackInfo.persistentID);
         
         // Update player state (this is cheap to get)
         MusicPlayerState state = getPlayerState();
@@ -142,6 +144,12 @@ DetailedTrackInfo getCurrentTrackInfo(void) {
         NSString* genre = [currentTrack genre];
         if (genre) cachedTrackInfo.genre = strdup([genre UTF8String]);
 
+        NSString* persistentID = [currentTrack persistentID];
+        if (persistentID) cachedTrackInfo.persistentID = strdup([persistentID UTF8String]);
+
+        // Get database ID
+        cachedTrackInfo.databaseID = (int)[currentTrack databaseID];
+
         // Numeric information (these cause most leaks according to malloc_history)
         cachedTrackInfo.year = [currentTrack year];
         cachedTrackInfo.trackNumber = [currentTrack trackNumber];
@@ -169,6 +177,7 @@ DetailedTrackInfo getCurrentTrackInfo(void) {
     if (cachedTrackInfo.albumArtist) info.albumArtist = strdup(cachedTrackInfo.albumArtist);
     if (cachedTrackInfo.composer) info.composer = strdup(cachedTrackInfo.composer);
     if (cachedTrackInfo.genre) info.genre = strdup(cachedTrackInfo.genre);
+    if (cachedTrackInfo.persistentID) info.persistentID = strdup(cachedTrackInfo.persistentID);
 
     // Player state (always get current state)
     MusicPlayerState state = getPlayerState();
@@ -186,6 +195,7 @@ void freeTrackInfo(DetailedTrackInfo* info) {
         free(info->albumArtist);
         free(info->composer);
         free(info->genre);
+        free(info->persistentID);
 
         info->title = NULL;
         info->artist = NULL;
@@ -193,6 +203,7 @@ void freeTrackInfo(DetailedTrackInfo* info) {
         info->albumArtist = NULL;
         info->composer = NULL;
         info->genre = NULL;
+        info->persistentID = NULL;
         info->isValid = 0;
     }
 }

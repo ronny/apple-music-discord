@@ -337,6 +337,13 @@ pub fn main() !void {
                 lastTitle = if (currentTitleStr) |title| allocator.dupe(u8, title) catch null else null;
                 print("🔄 Track changed: ", .{});
                 printTrackInfo();
+                
+                // Debug: Print IDs for URL construction
+                if (track.persistentID) |pid| {
+                    const pid_len = std.mem.len(pid);
+                    print("🔍 Persistent ID: {s}\n", .{pid[0..pid_len]});
+                }
+                print("🔍 Database ID: {}\n", .{track.databaseID});
             } else {
                 // Only state changed
                 print("🔄 State changed: ", .{});

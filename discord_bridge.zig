@@ -76,6 +76,45 @@ const DiscordClient = struct {
             c.Discord_Activity_SetState(&activity, @ptrCast(&artist_str));
         }
 
+        // Set clickable URL for song title using Apple Music search
+        if (title != null or artist != null) {
+            const url_buffer = try self.allocator.alloc(u8, 1024);
+            defer self.allocator.free(url_buffer);
+            
+            // Create search query from title and artist
+            var search_query = std.ArrayList(u8).init(self.allocator);
+            defer search_query.deinit();
+            
+            if (title) |t| {
+                try search_query.appendSlice(t);
+            }
+            if (artist) |a| {
+                if (title != null) try search_query.appendSlice(" ");
+                try search_query.appendSlice(a);
+            }
+            
+            // URL encode the search query (basic encoding for spaces)
+            var encoded_query = std.ArrayList(u8).init(self.allocator);
+            defer encoded_query.deinit();
+            
+            for (search_query.items) |char| {
+                switch (char) {
+                    ' ' => try encoded_query.appendSlice("%20"),
+                    '&' => try encoded_query.appendSlice("%26"),
+                    '?' => try encoded_query.appendSlice("%3F"),
+                    else => try encoded_query.append(char),
+                }
+            }
+            
+            const url = try std.fmt.bufPrint(url_buffer, "https://music.apple.com/search?term={s}", .{encoded_query.items});
+            
+            var url_str: c.Discord_String = .{
+                .ptr = @constCast(url.ptr),
+                .size = url.len,
+            };
+            c.Discord_Activity_SetDetailsUrl(&activity, @ptrCast(&url_str));
+        }
+
         // Set timestamps for "Playing" state only, accounting for current position
         if (std.mem.eql(u8, state, "Playing") and position_seconds >= 0 and duration_seconds > 0) {
             var timestamps: c.Discord_ActivityTimestamps = undefined;

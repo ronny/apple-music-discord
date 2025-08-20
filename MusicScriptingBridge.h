@@ -26,6 +26,8 @@ typedef struct {
     char *albumArtist;
     char *composer;
     char *genre;
+    char *persistentID;  // Apple Music persistent ID for deep linking
+    int databaseID;      // Database ID from iTunes/Music.app
     int year;
     int trackNumber;
     int trackCount;
