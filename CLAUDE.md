@@ -115,3 +115,5 @@ zig build test-all  # Run all tests (recommended)
 ```
 
 Tests require Apple Music to be available for full coverage of music bridge functionality.
+
+- Consult TODO.md for future plans
