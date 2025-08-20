@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(zig build:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(DISCORD_SOCIAL_SDK_PATH=/Users/ronny/src/discord_social_sdk make app)",
+      "Bash(DISCORD_SOCIAL_SDK_PATH=/Users/ronny/src/discord_social_sdk zig build)",
+      "Bash(jj log:*)",
+      "Bash(jj diff:*)"
     ],
     "deny": [],
     "ask": []

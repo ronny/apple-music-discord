@@ -48,7 +48,7 @@ code. Clang, GCC, and other compilers should be avoided unless absolutely necess
 main.zig → MusicScriptingBridge → Apple Music ScriptingBridge → Display info
 ```
 
-**Notification Approach (DEPRECATED - moved to attic/legacyNotif/)**:
+**Notification Approach (DEPRECATED)**:
 ```
 Apple Music → NSDistributedNotificationCenter → MusicPlayerBridge → notif.zig → Display info
 ```
@@ -66,7 +66,6 @@ Apple Music → NSDistributedNotificationCenter → MusicPlayerBridge → notif.
 Contains legacy implementations and experiments that are no longer used. They're kept here for
 reference only.
 
-- `attic/legacyNotif/` - Non-functional notification-based approach (notif.zig, MusicPlayerBridge)
 - Other legacy files in various languages (C, Zig experiments)
 
 ### Discord Integration

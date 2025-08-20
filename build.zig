@@ -5,7 +5,8 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
 
     // Discord Social SDK path configuration
-    const discord_sdk_path = b.option([]const u8, "discord-sdk", "Path to Discord Social SDK directory") orelse
+    const discord_social_sdk_path = b.option([]const u8, "discord-social-sdk", "Path to Discord Social SDK directory") orelse
+        std.posix.getenv("DISCORD_SOCIAL_SDK_PATH") orelse
         b.pathJoin(&.{ std.posix.getenv("HOME") orelse ".", "src", "discord_social_sdk" });
 
     const exe = b.addExecutable(.{
@@ -25,28 +26,28 @@ pub fn build(b: *std.Build) void {
     exe.addIncludePath(b.path("."));
 
     // Discord Social SDK integration (required)
-    const discord_include_path = b.pathJoin(&.{ discord_sdk_path, "include" });
-    
+    const discord_include_path = b.pathJoin(&.{ discord_social_sdk_path, "include" });
+
     // Check if Discord Social SDK exists - fail build if not found
     const discord_header = b.pathJoin(&.{ discord_include_path, "cdiscord.h" });
     std.fs.cwd().access(discord_header, .{}) catch {
-        std.debug.print("❌ ERROR: Discord Social SDK not found at: {s}\n", .{discord_sdk_path});
+        std.debug.print("❌ ERROR: Discord Social SDK not found at: {s}\n", .{discord_social_sdk_path});
         std.debug.print("📥 Download from: https://discord.com/developers/applications/APP_ID/social-sdk/downloads (replace APP_ID with your actual app ID)\n", .{});
-        std.debug.print("📁 Extract to: {s}\n", .{discord_sdk_path});
-        std.debug.print("⚙️  Or specify custom path: zig build -Ddiscord-sdk=/path/to/discord_social_sdk\n", .{});
+        std.debug.print("📁 Extract to: {s}\n", .{discord_social_sdk_path});
+        std.debug.print("⚙️  Or specify custom path: zig build -Ddiscord-social-sdk=/path/to/discord_social_sdk\n", .{});
         std.posix.exit(1);
     };
-    
+
     // Detect the correct library path (release vs debug, platform-specific)
     const discord_lib_path = blk: {
         const build_mode = if (optimize == .Debug) "debug" else "release";
-        const lib_base = b.pathJoin(&.{ discord_sdk_path, "lib", build_mode });
-        
+        const lib_base = b.pathJoin(&.{ discord_social_sdk_path, "lib", build_mode });
+
         // Check for the dylib in the build mode directory
         const dylib_path = b.pathJoin(&.{ lib_base, "libdiscord_partner_sdk.dylib" });
         std.fs.cwd().access(dylib_path, .{}) catch {
             // Fall back to the base lib directory
-            const fallback_lib_path = b.pathJoin(&.{ discord_sdk_path, "lib" });
+            const fallback_lib_path = b.pathJoin(&.{ discord_social_sdk_path, "lib" });
             const fallback_dylib = b.pathJoin(&.{ fallback_lib_path, "libdiscord_partner_sdk.dylib" });
             std.fs.cwd().access(fallback_dylib, .{}) catch {
                 std.debug.print("❌ ERROR: Discord Social SDK library not found\n", .{});
@@ -54,7 +55,7 @@ pub fn build(b: *std.Build) void {
                 std.debug.print("   - {s}\n", .{dylib_path});
                 std.debug.print("   - {s}\n", .{fallback_dylib});
                 std.debug.print("📋 Available files in {s}:\n", .{lib_base});
-                
+
                 // Try to list available files for debugging
                 if (std.fs.cwd().openDir(lib_base, .{ .iterate = true })) |dir| {
                     var walker = dir.iterate();
@@ -64,7 +65,7 @@ pub fn build(b: *std.Build) void {
                 } else |_| {
                     std.debug.print("   (could not list directory)\n", .{});
                 }
-                
+
                 std.posix.exit(1);
             };
             break :blk fallback_lib_path;
@@ -76,7 +77,7 @@ pub fn build(b: *std.Build) void {
     exe.addLibraryPath(.{ .cwd_relative = discord_lib_path });
     exe.linkSystemLibrary("discord_partner_sdk");
 
-    std.debug.print("✅ Discord Social SDK found at: {s}\n", .{discord_sdk_path});
+    std.debug.print("✅ Discord Social SDK found at: {s}\n", .{discord_social_sdk_path});
     std.debug.print("📚 Using library path: {s}\n", .{discord_lib_path});
 
     // Link required macOS frameworks

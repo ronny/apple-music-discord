@@ -1,17 +1,20 @@
 # Apple Music → Discord Rich Presence
 
-A macOS application that listens to Apple Music and updates the user's rich presence in Discord.app running locally.
+A macOS application that listens to Apple Music.app and updates the user's rich presence in
+Discord.app running locally.
 
-## Prerequisites
+## Development Prerequisites
 
 ### Required
+
 - **macOS** (tested on macOS 15.6+)
 - **Xcode Command Line Tools** or full Xcode installation
-- **Zig compiler** (tested with 0.14.1)
+- **Zig compiler** (tested with 0.14.1) https://ziglang.org
 - **Apple Music.app**
 - **Discord.app** (for rich presence display)
 
 ### Discord Social SDK (Required)
+
 Download the Discord Social SDK 1.5 from:
 https://discord.com/developers/applications/YOUR_APP_ID/social-sdk/downloads
 
@@ -19,27 +22,19 @@ Extract to `$HOME/src/discord_social_sdk` or specify a custom path during build.
 
 **⚠️ The Discord Social SDK is required - the build will fail if not found.**
 
-**🔐 macOS Security Note**: On first run, macOS will show a security popup for `libdiscord_partner_sdk.dylib`. You must manually allow it in **System Settings → Privacy & Security → Security → libdiscord_partner_sdk.dylib "Allow Anyway"**.
+**🔐 macOS Security Note**: On first run, macOS will show a security popup for
+`libdiscord_partner_sdk.dylib`. You must manually allow it in **System Settings → Privacy & Security
+→ Security → libdiscord_partner_sdk.dylib "Allow Anyway"**.
 
 ## Building
 
 ### Building the Application
-```bash
-# Clone the repository
-git clone <repository-url>
-cd apple-music-presence
 
-# Generate Music.h header (requires full Xcode)
-make Music.h
+```sh
+make
 
-# Build with Discord Social SDK (default location: $HOME/src/discord_social_sdk)
-zig build
-
-# Build with custom Discord Social SDK location
-zig build -Ddiscord-sdk=/path/to/discord_social_sdk
-
-# Alternative using make
-make presence
+# Or, specify a custom path to Discord Social SDK
+DISCORD_SOCIAL_SDK_PATH=/path/to/discord_social_sdk make
 ```
 
 ### Running the Application
@@ -72,7 +67,6 @@ zig build test-integration
 - `MusicScriptingBridge.{m,h}` - Objective-C bridge to Apple Music
 - `Music.h` - Generated header from Apple Music app
 - `tests/` - Comprehensive test suite
-- `attic/` - Legacy implementations (reference only)
 
 ## Configuration
 
@@ -94,8 +88,8 @@ zig build test-integration
 
 **"Discord Social SDK not found" (Build failure)**
 - Download Discord Social SDK from Discord Developer Portal
-- Extract to `$HOME/src/discord_social_sdk` 
-- Or specify custom path with `-Ddiscord-sdk=/path/to/social-sdk`
+- Extract to `$HOME/src/discord_social_sdk`
+- Or specify custom path with `-Ddiscord-social-sdk=/path/to/social-sdk`
 - **Build will not proceed without Discord Social SDK**
 
 **Build errors with Music.h**
