@@ -42,10 +42,23 @@ const DiscordClient = struct {
         c.Discord_Activity_Init(&activity);
         defer c.Discord_Activity_Drop(&activity);
         
-        // Set activity type to "Listening"
+        // Set activity type to "Listening" for music
         c.Discord_Activity_SetType(&activity, c.Discord_ActivityTypes_Listening);
         
-        // Set details (song title)
+        // Set status display type to prioritize Details field for minimal display
+        var display_type: c.Discord_StatusDisplayTypes = c.Discord_StatusDisplayTypes_Details;
+        c.Discord_Activity_SetStatusDisplayType(&activity, &display_type);
+        
+        // Set name (song title) - this appears in minimal display
+        if (title) |t| {
+            const title_str: c.Discord_String = .{
+                .ptr = @constCast(t.ptr),
+                .size = t.len,
+            };
+            c.Discord_Activity_SetName(&activity, title_str);
+        }
+        
+        // Set details (song title) - this appears in full display
         if (title) |t| {
             var title_str: c.Discord_String = .{
                 .ptr = @constCast(t.ptr),
