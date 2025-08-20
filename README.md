@@ -3,15 +3,14 @@
 A macOS application that listens to Apple Music.app and updates the user's rich presence in
 Discord.app running locally.
 
-## Development Prerequisites
-
-### Required
+## Development Requirements
 
 - **macOS** (tested on macOS 15.6+)
-- **Xcode Command Line Tools** or full Xcode installation
 - **Zig compiler** (tested with 0.14.1) https://ziglang.org
-- **Apple Music.app**
-- **Discord.app** (for rich presence display)
+- **Discord Social SDK** see below
+
+Optional:
+- **Xcode** (full version, not just Command Line Tools, only when you need to regenerate `Music.h`)
 
 ### Discord Social SDK (Required)
 
@@ -31,14 +30,23 @@ Extract to `$HOME/src/discord_social_sdk` or specify a custom path during build.
 ### Building the Application
 
 ```sh
-make
+# Build with Discord Social SDK (default location: $HOME/src/discord_social_sdk)
+zig build
 
-# Or, specify a custom path to Discord Social SDK
-DISCORD_SOCIAL_SDK_PATH=/path/to/discord_social_sdk make
+# Build with custom Discord Social SDK location
+zig build -Ddiscord-social-sdk=/path/to/discord_social_sdk
+```
+
+`Music.h` is generated based on the currently present `Apple Music.app`, so it's probably version specific.
+If it's out of sync, you can regenerate it by running `zig build Music.h`.
+
+```sh
+# Generate Music.h header (requires full Xcode installation)
+zig build Music.h
 ```
 
 ### Running the Application
-```bash
+```sh
 # Run with default settings
 zig build run
 
@@ -52,7 +60,7 @@ zig build run
 ## Development
 
 ### Testing
-```bash
+```sh
 # Run all tests
 zig build test-all
 
@@ -75,7 +83,7 @@ zig build test-integration
 - `--help, -h` - Show help message
 
 ### Build Options
-- `-Ddiscord-sdk=<path>` - Specify Discord Social SDK location
+- `-Ddiscord-social-sdk=<path>` - Specify Discord Social SDK location
 - `-Dtarget=<target>` - Cross-compilation target
 - `-Doptimize=<mode>` - Optimization mode (Debug, ReleaseSafe, ReleaseFast, ReleaseSmall)
 
@@ -93,7 +101,7 @@ zig build test-integration
 - **Build will not proceed without Discord Social SDK**
 
 **Build errors with Music.h**
-- Run `make Music.h` to regenerate the header
+- Run `zig build Music.h` to regenerate the header
 - Requires full Xcode installation (not just Command Line Tools)
 
 **No track changes detected**

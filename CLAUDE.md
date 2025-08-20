@@ -7,9 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Building
 - `zig build` - Build the main executable
 - `zig build run` - Build and run the application
-- `make presence` - Alternative build using Makefile (uses zig build, preferred)
-- `make presence_c` - Build C version using clang directly (just for testing)
-- `make Music.h` - Generate Music.h header from Apple Music app (requires Xcode)
+- `zig build Music.h` - Generate Music.h header from Apple Music app (requires Xcode)
 
 ### Testing
 - `zig build test-all` - Run all tests (recommended)

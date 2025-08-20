@@ -175,4 +175,13 @@ pub fn build(b: *std.Build) void {
     test_all_step.dependOn(&config_test_run.step);
     test_all_step.dependOn(&music_bridge_test_run.step);
     test_all_step.dependOn(&integration_test_run.step);
+
+    // Music.h generation step (requires full Xcode installation)
+    const music_header_cmd = b.addSystemCommand(&.{
+        "sh", "-c", "sdef /System/Applications/Music.app | sdp -fh --basename Music"
+    });
+    music_header_cmd.setCwd(b.path("."));
+    
+    const music_header_step = b.step("Music.h", "Generate Music.h header from Apple Music app (requires Xcode)");
+    music_header_step.dependOn(&music_header_cmd.step);
 }
