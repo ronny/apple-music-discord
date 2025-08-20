@@ -251,23 +251,30 @@ pub fn main() !void {
             if (lastState) |old_state| allocator.free(old_state);
             lastState = currentState;
             
-            // Update Discord activity
-            const title_str = if (track.title) |t| blk: {
-                const len = std.mem.len(t);
-                break :blk t[0..len];
-            } else null;
-            
-            const artist_str = if (track.artist) |a| blk: {
-                const len = std.mem.len(a);
-                break :blk a[0..len];
-            } else null;
-            
-            // Get current player position for accurate timestamps
-            const player_position = musicScriptingBridge.getPlayerPosition();
-            
-            discord.updateActivity(title_str, artist_str, currentStateStr, player_position, track.duration) catch |err| {
-                print("Warning: Failed to update Discord activity: {}\n", .{err});
-            };
+            // Update Discord activity (or clear if stopped)
+            if (state == .stopped) {
+                print("⏹️  Player stopped - clearing Discord activity\n", .{});
+                discord.clearActivity() catch |err| {
+                    print("Warning: Failed to clear Discord activity: {}\n", .{err});
+                };
+            } else {
+                const title_str = if (track.title) |t| blk: {
+                    const len = std.mem.len(t);
+                    break :blk t[0..len];
+                } else null;
+                
+                const artist_str = if (track.artist) |a| blk: {
+                    const len = std.mem.len(a);
+                    break :blk a[0..len];
+                } else null;
+                
+                // Get current player position for accurate timestamps
+                const player_position = musicScriptingBridge.getPlayerPosition();
+                
+                discord.updateActivity(title_str, artist_str, currentStateStr, player_position, track.duration) catch |err| {
+                    print("Warning: Failed to update Discord activity: {}\n", .{err});
+                };
+            }
         } else {
             // No changes, clean up temporary allocations
             if (currentTitle) |title| allocator.free(title);
