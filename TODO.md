@@ -10,3 +10,13 @@
    - Need to fetch album artwork from Apple Music ScriptingBridge
    - Challenges: Requires image hosting/CDN or Apple Music artwork URLs
    - Assets also support `SetSmallImage()` for secondary artwork
+
+3. [ ] Figure out requirements (signing, etc) to be able to build a binary that can be distributed
+       to users (doesn't have to be in the App Store), just enough to not trigger macOS's
+       security popups.
+   - Need Apple Developer ID certificate for code signing (`codesign`)
+   - Sign both the main binary and Discord Social SDK library (`libdiscord_partner_sdk.dylib`)
+   - Consider notarization for macOS 10.15+ to avoid "unidentified developer" warnings
+   - May need entitlements for ScriptingBridge access to Apple Music
+   - Current manual approval required: System Settings → Privacy & Security → "Allow Anyway"
+   - Alternative: Distribute via Homebrew or package managers that handle signing
