@@ -9,12 +9,64 @@ pub fn build(b: *std.Build) void {
         std.posix.getenv("DISCORD_SOCIAL_SDK_PATH") orelse
         b.pathJoin(&.{ std.posix.getenv("HOME") orelse ".", "src", "discord_social_sdk" });
 
+    // Generate version information
+    const gen_version = b.addWriteFiles();
+    const build_mode_str = @tagName(optimize);
+    const debug_prefix = if (optimize == .Debug) "debug-" else "";
+    const version_file = gen_version.add("version.zig", b.fmt(
+        \\// Generated at build time
+        \\const std = @import("std");
+        \\
+        \\// Version format: [debug-]YYYYMMDD-shorthash
+        \\pub fn getVersion(allocator: std.mem.Allocator) ![]const u8 {{
+        \\    // Get short commit hash
+        \\    const hash_result = std.process.Child.run(.{{
+        \\        .allocator = allocator,
+        \\        .argv = &.{{ "git", "rev-parse", "--short", "HEAD" }},
+        \\    }}) catch |err| {{
+        \\        std.debug.print("Warning: Could not get commit hash: {{}}\n", .{{err}});
+        \\        return allocator.dupe(u8, "{s}unknown-unknown");
+        \\    }};
+        \\    defer allocator.free(hash_result.stdout);
+        \\    defer allocator.free(hash_result.stderr);
+        \\    
+        \\    if (hash_result.term != .Exited or hash_result.term.Exited != 0) {{
+        \\        return allocator.dupe(u8, "{s}unknown-unknown");
+        \\    }}
+        \\    
+        \\    const hash = std.mem.trim(u8, hash_result.stdout, " \t\n\r");
+        \\    
+        \\    // Get commit date in UTC using ISO format
+        \\    const date_result = std.process.Child.run(.{{
+        \\        .allocator = allocator,
+        \\        .argv = &.{{ "git", "show", "-s", "--format=%cd", "--date=format:%Y%m%d", "HEAD" }},
+        \\    }}) catch |err| {{
+        \\        std.debug.print("Warning: Could not get commit date: {{}}\n", .{{err}});
+        \\        return std.fmt.allocPrint(allocator, "{s}unknown-{{s}}", .{{hash}});
+        \\    }};
+        \\    defer allocator.free(date_result.stdout);
+        \\    defer allocator.free(date_result.stderr);
+        \\    
+        \\    if (date_result.term != .Exited or date_result.term.Exited != 0) {{
+        \\        return std.fmt.allocPrint(allocator, "{s}unknown-{{s}}", .{{hash}});
+        \\    }}
+        \\    
+        \\    const date = std.mem.trim(u8, date_result.stdout, " \t\n\r");
+        \\    return std.fmt.allocPrint(allocator, "{s}{{s}}-{{s}}", .{{date, hash}});
+        \\}}
+        \\
+        \\pub const build_mode = "{s}";
+        \\
+    , .{ debug_prefix, debug_prefix, debug_prefix, debug_prefix, debug_prefix, build_mode_str }));
+
     const exe = b.addExecutable(.{
         .name = "music-discord-presence",
         .root_source_file = b.path("main.zig"),
         .target = target,
         .optimize = optimize,
     });
+    
+    exe.root_module.addAnonymousImport("version", .{ .root_source_file = version_file });
 
     // Add the Objective-C bridge source
     exe.addCSourceFile(.{

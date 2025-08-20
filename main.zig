@@ -4,6 +4,7 @@ const musicScriptingBridge = @cImport({
     @cInclude("MusicScriptingBridge.h");
 });
 const Discord = @import("discord_bridge.zig").Discord;
+const version = @import("version");
 
 const Config = struct {
     polling_interval_ms: u32 = 500,
@@ -19,11 +20,22 @@ const Config = struct {
             const arg = args[i];
 
             if (std.mem.eql(u8, arg, "--help") or std.mem.eql(u8, arg, "-h")) {
-                print("Apple Music.app -> Discord Rich Presence Monitor\n\n", .{});
+                const app_version = version.getVersion(allocator) catch "unknown";
+                defer allocator.free(app_version);
+
+                print("Apple Music.app -> Discord Rich Presence Monitor version {s}\n\n", .{app_version});
                 print("Usage: {s} [options]\n\n", .{args[0]});
                 print("Options:\n", .{});
                 print("  --interval, -i <ms>  Polling interval in milliseconds (default: 500)\n", .{});
+                print("  --version, -v        Show version information\n", .{});
                 print("  --help, -h           Show this help message\n", .{});
+                std.process.exit(0);
+            } else if (std.mem.eql(u8, arg, "--version") or std.mem.eql(u8, arg, "-v")) {
+                const app_version = version.getVersion(allocator) catch "unknown";
+                defer allocator.free(app_version);
+
+                print("music-discord-presence version {s}\n", .{app_version});
+                print("Build mode: {s}\n", .{version.build_mode});
                 std.process.exit(0);
             } else if (std.mem.eql(u8, arg, "--interval") or std.mem.eql(u8, arg, "-i")) {
                 if (i + 1 >= args.len) {
@@ -157,7 +169,10 @@ pub fn main() !void {
         std.process.exit(1);
     };
 
-    print("🎧 Apple Music -> Discord Rich Presence Monitor\n", .{});
+    const app_version = version.getVersion(allocator) catch "unknown";
+    defer allocator.free(app_version);
+
+    print("🎧 Apple Music -> Discord Rich Presence Monitor version {s}\n", .{app_version});
     print("Press Ctrl+C to exit. Change tracks to test detection.\n", .{});
     print("Polling interval: {}ms\n\n", .{config.polling_interval_ms});
 

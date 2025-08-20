@@ -83,6 +83,7 @@ Reference: https://discord.com/developers/docs/discord-social-sdk/index.html
 - Application supports configurable polling intervals via `--interval` CLI flag (default 500ms)
 - **macOS Security**: Discord Social SDK library requires manual approval in System Settings on first run
 - Consult TODO.md for future plans
+- Use jj (colocated with git) for VCS. Keep in mind that jj leaves git not on any branch, which is normal.
 
 ### Zig notes
 
