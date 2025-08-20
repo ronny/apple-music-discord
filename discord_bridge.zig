@@ -37,7 +37,7 @@ const DiscordClient = struct {
         c.Discord_Client_Drop(&self.client);
     }
     
-    pub fn updateActivity(self: *Self, title: ?[]const u8, artist: ?[]const u8, state: []const u8) !void {
+    pub fn updateActivity(self: *Self, title: ?[]const u8, artist: ?[]const u8, state: []const u8, position_seconds: f64, duration_seconds: f64) !void {
         var activity: c.Discord_Activity = undefined;
         c.Discord_Activity_Init(&activity);
         defer c.Discord_Activity_Drop(&activity);
@@ -63,14 +63,23 @@ const DiscordClient = struct {
             c.Discord_Activity_SetState(&activity, @ptrCast(&artist_str));
         }
         
-        // Set timestamps for "Playing" state
-        if (std.mem.eql(u8, state, "Playing")) {
+        // Set timestamps for "Playing" state only, accounting for current position
+        if (std.mem.eql(u8, state, "Playing") and position_seconds >= 0 and duration_seconds > 0) {
             var timestamps: c.Discord_ActivityTimestamps = undefined;
             c.Discord_ActivityTimestamps_Init(&timestamps);
             defer c.Discord_ActivityTimestamps_Drop(&timestamps);
             
-            const now = @as(u64, @intCast(std.time.timestamp()));
-            c.Discord_ActivityTimestamps_SetStart(&timestamps, now);
+            // Calculate start time by subtracting current position from now
+            const now_seconds = @as(u64, @intCast(std.time.timestamp()));
+            const position_ms = @as(u64, @intFromFloat(position_seconds * 1000.0));
+            const start_time = now_seconds * 1000 - position_ms; // Discord expects milliseconds
+            
+            // Calculate end time by adding remaining duration to now
+            const remaining_seconds = duration_seconds - position_seconds;
+            const end_time = now_seconds * 1000 + @as(u64, @intFromFloat(remaining_seconds * 1000.0));
+            
+            c.Discord_ActivityTimestamps_SetStart(&timestamps, start_time);
+            c.Discord_ActivityTimestamps_SetEnd(&timestamps, end_time);
             c.Discord_Activity_SetTimestamps(&activity, &timestamps);
         }
         

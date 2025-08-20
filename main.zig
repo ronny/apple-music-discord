@@ -262,7 +262,10 @@ pub fn main() !void {
                 break :blk a[0..len];
             } else null;
             
-            discord.updateActivity(title_str, artist_str, currentStateStr) catch |err| {
+            // Get current player position for accurate timestamps
+            const player_position = musicScriptingBridge.getPlayerPosition();
+            
+            discord.updateActivity(title_str, artist_str, currentStateStr, player_position, track.duration) catch |err| {
                 print("Warning: Failed to update Discord activity: {}\n", .{err});
             };
         } else {
