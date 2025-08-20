@@ -20,7 +20,7 @@ fn handleShutdownSignal(sig: c_int) callconv(.C) void {
         std.posix.SIG.TERM => "SIGTERM",
         else => "UNKNOWN",
     };
-    
+
     print("\n🛑 Received {s}, shutting down gracefully...\n", .{signal_name});
     shutdown_requested.store(true, .seq_cst);
 }
@@ -28,7 +28,7 @@ fn handleShutdownSignal(sig: c_int) callconv(.C) void {
 // Cleanup function called during shutdown
 fn performGracefulShutdown() void {
     print("🧹 Cleaning up resources...\n", .{});
-    
+
     // Clear Discord activity
     if (discord_client) |client| {
         client.clearActivity() catch |err| {
@@ -36,11 +36,11 @@ fn performGracefulShutdown() void {
         };
         print("✓ Discord activity cleared\n", .{});
     }
-    
+
     // Clear ScriptingBridge cache
     musicScriptingBridge.clearTrackCache();
     print("✓ ScriptingBridge cache cleared\n", .{});
-    
+
     // Clean up allocated memory
     if (cleanup_allocator) |allocator| {
         if (cleanup_last_title) |title_ptr| {
@@ -57,7 +57,7 @@ fn performGracefulShutdown() void {
         }
         print("✓ Memory cleaned up\n", .{});
     }
-    
+
     print("👋 Graceful shutdown complete\n", .{});
 }
 
@@ -224,12 +224,17 @@ pub fn main() !void {
         std.process.exit(1);
     };
 
+    // Get Discord app ID from build configuration
+    const build_config = @import("config");
+    const discord_app_id: i64 = build_config.discord_app_id;
+
     const app_version = version.getVersion(allocator) catch "unknown";
     defer allocator.free(app_version);
 
     print("🎧 Apple Music -> Discord Rich Presence Monitor version {s}\n", .{app_version});
     print("Press Ctrl+C to exit. Change tracks to test detection.\n", .{});
-    print("Polling interval: {}ms\n\n", .{config.polling_interval_ms});
+    print("Polling interval: {}ms\n", .{config.polling_interval_ms});
+    print("Discord app ID: {}\n\n", .{discord_app_id});
 
     // Register signal handlers for graceful shutdown
     const sigint_action = std.posix.Sigaction{
@@ -242,17 +247,15 @@ pub fn main() !void {
         .mask = std.posix.empty_sigset,
         .flags = 0,
     };
-    
+
     std.posix.sigaction(std.posix.SIG.INT, &sigint_action, null);
     std.posix.sigaction(std.posix.SIG.TERM, &sigterm_action, null);
 
     // Initialize Discord client
-    // Use your application's client ID from Discord Developer Portal
-    const discord_client_id: i64 = 1377596915675562064;
-    var discord = Discord.init(allocator, discord_client_id) catch |err| {
+    var discord = Discord.init(allocator, discord_app_id) catch |err| {
         print("❌ ERROR: Failed to initialize Discord client: {}\n", .{err});
         print("🔍 Make sure Discord.app is running\n", .{});
-        print("🔍 Make sure the Discord Social SDK application ID is correct\n", .{});
+        print("🔍 Make sure the Discord Social SDK application ID ({}) is correct\n", .{discord_app_id});
         std.process.exit(1);
     };
     defer discord.deinit();
@@ -369,7 +372,7 @@ pub fn main() !void {
 
         std.time.sleep(config.polling_interval_ms * std.time.ns_per_ms);
     }
-    
+
     // Perform graceful shutdown when exiting main loop
     performGracefulShutdown();
     std.process.exit(0);

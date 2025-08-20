@@ -3,39 +3,10 @@ zig-out/
 zig-cache/
 .zig-cache/
 
-# macOS system files
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
 
-# Xcode
-*.pbxuser
-*.mode1v3
-*.mode2v3
-*.perspectivev3
-*.xcuserstate
-project.xcworkspace/
-xcuserdata/
-
-# Compiled binaries
-*.o
-*.dylib
-*.so
-*.a
-
-# Debug symbols
-*.dSYM/
-
-# IDE files
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
+.env
+.envrc
 
 # Claude
 .claude/settings.local.json

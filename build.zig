@@ -3,7 +3,18 @@ const std = @import("std");
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
-    
+
+    // Get Discord app ID from environment variable at compile time
+    const discord_app_id_str = std.posix.getenv("DISCORD_APP_ID") orelse {
+        std.debug.print("❌ ERROR: DISCORD_APP_ID environment variable must be set at compile time\n", .{});
+        std.debug.print("🔍 Set it like: DISCORD_APP_ID=1234567890123456789 zig build\n", .{});
+        std.posix.exit(1);
+    };
+    const discord_app_id = std.fmt.parseInt(i64, discord_app_id_str, 10) catch {
+        std.debug.print("❌ ERROR: DISCORD_APP_ID must be a valid integer, got: {s}\n", .{discord_app_id_str});
+        std.posix.exit(1);
+    };
+
     // Discord Social SDK path configuration
     const discord_social_sdk_path = b.option([]const u8, "discord-social-sdk", "Path to Discord Social SDK directory") orelse
         std.posix.getenv("DISCORD_SOCIAL_SDK_PATH") orelse
@@ -29,13 +40,13 @@ pub fn build(b: *std.Build) void {
         \\    }};
         \\    defer allocator.free(hash_result.stdout);
         \\    defer allocator.free(hash_result.stderr);
-        \\    
+        \\
         \\    if (hash_result.term != .Exited or hash_result.term.Exited != 0) {{
         \\        return allocator.dupe(u8, "{s}unknown-unknown");
         \\    }}
-        \\    
+        \\
         \\    const hash = std.mem.trim(u8, hash_result.stdout, " \t\n\r");
-        \\    
+        \\
         \\    // Get commit date in UTC using ISO format
         \\    const date_result = std.process.Child.run(.{{
         \\        .allocator = allocator,
@@ -46,11 +57,11 @@ pub fn build(b: *std.Build) void {
         \\    }};
         \\    defer allocator.free(date_result.stdout);
         \\    defer allocator.free(date_result.stderr);
-        \\    
+        \\
         \\    if (date_result.term != .Exited or date_result.term.Exited != 0) {{
         \\        return std.fmt.allocPrint(allocator, "{s}unknown-{{s}}", .{{hash}});
         \\    }}
-        \\    
+        \\
         \\    const date = std.mem.trim(u8, date_result.stdout, " \t\n\r");
         \\    return std.fmt.allocPrint(allocator, "{s}{{s}}-{{s}}", .{{date, hash}});
         \\}}
@@ -65,14 +76,19 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
-    
+
     // Add the Objective-C bridge source
     exe.addCSourceFile(.{
         .file = b.path("MusicScriptingBridge.m"),
         .flags = &.{"-fobjc-arc"}, // Enable ARC for Objective-C
     });
-    
+
     exe.root_module.addAnonymousImport("version", .{ .root_source_file = version_file });
+
+    // Add Discord app ID as a build option
+    const options = b.addOptions();
+    options.addOption(i64, "discord_app_id", discord_app_id);
+    exe.root_module.addOptions("config", options);
 
     // Add the header include path
     exe.addIncludePath(b.path("."));
