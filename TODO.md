@@ -2,7 +2,7 @@
 
 1. [x] The app's memory usage grows over time. Investigate and fix the memory leak.
 
-2. [ ] Add version based on yyyymmdd-commithash
+2. [x] Add version based on yyyymmdd-commithash
 
 3. [ ] Link song to Apple Music in the Activity Details
    - Use `Discord_Activity_SetDetailsUrl()` to make song title clickable
