@@ -59,10 +59,10 @@ zig build Music.h
 zig build run
 
 # Run with custom polling interval
-./zig-out/bin/apple-music-discord-presence --interval 1000
+./zig-out/bin/music-discord-presence --interval 1000
 
 # Show help
-./zig-out/bin/apple-music-discord-presence --help
+./zig-out/bin/music-discord-presence --help
 ```
 
 ## Development
@@ -80,8 +80,8 @@ zig build test-integration
 
 ### Project Structure
 - `main.zig` - Main application with polling-based track detection
-- `MusicScriptingBridge.{m,h}` - Objective-C bridge to Apple Music
-- `Music.h` - Generated header from Apple Music app
+- `MusicScriptingBridge.{m,h}` - Objective-C bridge to Apple Music.app
+- `Music.h` - Generated header from Apple Music.app
 - `tests/` - Comprehensive test suite
 
 ## Configuration
@@ -119,7 +119,7 @@ zig build test-integration
 **No track changes detected**
 - Default polling interval is 500ms
 - Try lower interval: `--interval 200`
-- Ensure Apple Music is actively playing different tracks
+- Ensure Apple Music.app is actively playing different tracks
 
 **macOS Security popup for Discord Social SDK library**
 - macOS will block unsigned libraries on first run
@@ -129,7 +129,9 @@ zig build test-integration
 
 ## Architecture
 
-This application uses **polling-based track detection** via Apple Music's ScriptingBridge API. The notification-based approach was found to be non-functional on modern macOS versions and has been deprecated.
+This application uses **polling-based track detection** via Apple Music.app's ScriptingBridge API.
+The notification-based approach was found to be non-functional on modern macOS versions and has been
+deprecated.
 
 **Data Flow:**
 ```

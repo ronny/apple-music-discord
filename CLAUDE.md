@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `zig build` - Build the main executable (Debug mode, uses Discord Social SDK debug library)
 - `zig build -Doptimize=ReleaseFast` - Build release version (uses Discord Social SDK release library)
 - `zig build run` - Build and run the application
-- `zig build Music.h` - Generate Music.h header from Apple Music app (requires Xcode)
+- `zig build Music.h` - Generate Music.h header from Apple Music.app (requires Xcode)
 
 ### Testing
 - `zig build test-all` - Run all tests (recommended)
@@ -17,11 +17,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `zig build test-integration` - Run integration tests
 - `zig build test` - Run main application tests
 
-The main executable is built as `apple-music-discord-presence` and outputs to `zig-out/bin/`.
+The main executable is built as `music-discord-presence` and outputs to `zig-out/bin/`.
 
 ## Project Architecture
 
-This is a macOS-only application that listens to Apple Music playback and updates the user's rich
+This is a macOS-only application that listens to Apple Music.app playback and updates the user's rich
 presence in Discord.app using [Discord Social SDK (Standalone
 C++)](https://discord.com/developers/docs/discord-social-sdk/getting-started/using-c++).
 
@@ -30,21 +30,21 @@ code. Clang, GCC, and other compilers should be avoided unless absolutely necess
 
 ### Core Architecture Components
 
-1. **Objective-C Bridges**: there is no macOS API to access Apple Music playback information directly,
+1. **Objective-C Bridges**: there is no macOS API to access Apple Music.app playback information directly,
   so we need to use ScriptingBridge to access it.
-   - `MusicScriptingBridge.m/.h` - Direct Apple Music ScriptingBridge interface where we can query
+   - `MusicScriptingBridge.m/.h` - Direct Apple Music.app ScriptingBridge interface where we can query
      the currently playing track, but we won't get notified when the track changes.
    - `MusicPlayerBridge.m/.h` - Notification-based monitoring bridge, which is an attempt to get
-     notification when the track changes in Apple Music.
+     notification when the track changes in Apple Music.app.
 
 2. **Generated Headers**:
-   - `Music.h` - Auto-generated from Apple Music app using `sdef`/`sdp`
+   - `Music.h` - Auto-generated from Music.app using `sdef`/`sdp`
 
 ### Data Flow
 
 **ScriptingBridge Approach (main.zig)**:
 ```
-main.zig → MusicScriptingBridge → Apple Music ScriptingBridge → Display info
+main.zig → MusicScriptingBridge → Apple Music.app ScriptingBridge → Display info
 ```
 
 **Notification Approach (DEPRECATED)**:
@@ -52,7 +52,8 @@ main.zig → MusicScriptingBridge → Apple Music ScriptingBridge → Display in
 Apple Music → NSDistributedNotificationCenter → MusicPlayerBridge → notif.zig → Display info
 ```
 
-**Note**: The notification approach was found to be non-functional on modern macOS versions. Apple Music does not send the expected distributed notifications, making polling the only viable approach.
+**Note**: The notification approach was found to be non-functional on modern macOS versions. Apple
+Music.app does not send the expected distributed notifications, making polling the only viable approach.
 
 ### Key Dependencies
 

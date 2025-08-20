@@ -7,19 +7,19 @@ const Discord = @import("discord_bridge.zig").Discord;
 
 const Config = struct {
     polling_interval_ms: u32 = 500,
-    
+
     fn parseArgs(allocator: std.mem.Allocator) !Config {
         var config = Config{};
-        
+
         const args = try std.process.argsAlloc(allocator);
         defer std.process.argsFree(allocator, args);
-        
+
         var i: usize = 1;
         while (i < args.len) : (i += 1) {
             const arg = args[i];
-            
+
             if (std.mem.eql(u8, arg, "--help") or std.mem.eql(u8, arg, "-h")) {
-                print("Apple Music -> Discord Rich Presence Monitor\n\n", .{});
+                print("Apple Music.app -> Discord Rich Presence Monitor\n\n", .{});
                 print("Usage: {s} [options]\n\n", .{args[0]});
                 print("Options:\n", .{});
                 print("  --interval, -i <ms>  Polling interval in milliseconds (default: 500)\n", .{});
@@ -45,7 +45,7 @@ const Config = struct {
                 std.process.exit(1);
             }
         }
-        
+
         return config;
     }
 };
@@ -142,7 +142,7 @@ pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
     const allocator = gpa.allocator();
-    
+
     const config = Config.parseArgs(allocator) catch |err| {
         print("Error parsing arguments: {}\n", .{err});
         std.process.exit(1);
@@ -205,7 +205,7 @@ pub fn main() !void {
             const len = std.mem.len(title);
             currentTitle = allocator.dupe(u8, title[0..len]) catch null;
         }
-        
+
         // Get current player state
         const state: PlayerState = @enumFromInt(musicScriptingBridge.getPlayerState());
         const currentStateStr = state.toString();
@@ -222,7 +222,7 @@ pub fn main() !void {
             }
             break :blk false;
         };
-        
+
         const stateChanged = blk: {
             if (lastState == null and currentState != null) break :blk true;
             if (lastState != null and currentState == null) break :blk true;
@@ -247,10 +247,10 @@ pub fn main() !void {
                 print("🔄 State changed: ", .{});
                 printTrackInfo();
             }
-            
+
             if (lastState) |old_state| allocator.free(old_state);
             lastState = currentState;
-            
+
             // Update Discord activity (or clear if stopped)
             if (state == .stopped) {
                 print("⏹️  Player stopped - clearing Discord activity\n", .{});
@@ -262,15 +262,15 @@ pub fn main() !void {
                     const len = std.mem.len(t);
                     break :blk t[0..len];
                 } else null;
-                
+
                 const artist_str = if (track.artist) |a| blk: {
                     const len = std.mem.len(a);
                     break :blk a[0..len];
                 } else null;
-                
+
                 // Get current player position for accurate timestamps
                 const player_position = musicScriptingBridge.getPlayerPosition();
-                
+
                 discord.updateActivity(title_str, artist_str, currentStateStr, player_position, track.duration) catch |err| {
                     print("Warning: Failed to update Discord activity: {}\n", .{err});
                 };
@@ -280,7 +280,7 @@ pub fn main() !void {
             if (currentTitle) |title| allocator.free(title);
             if (currentState) |cur_state| allocator.free(cur_state);
         }
-        
+
         // Run Discord callbacks to process events
         discord.runCallbacks();
 

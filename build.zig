@@ -10,7 +10,7 @@ pub fn build(b: *std.Build) void {
         b.pathJoin(&.{ std.posix.getenv("HOME") orelse ".", "src", "discord_social_sdk" });
 
     const exe = b.addExecutable(.{
-        .name = "apple-music-discord-presence",
+        .name = "music-discord-presence",
         .root_source_file = b.path("main.zig"),
         .target = target,
         .optimize = optimize,
@@ -177,12 +177,9 @@ pub fn build(b: *std.Build) void {
     test_all_step.dependOn(&integration_test_run.step);
 
     // Music.h generation step (requires full Xcode installation)
-    const music_header_cmd = b.addSystemCommand(&.{
-        "sh", "-c", "sdef /System/Applications/Music.app | sdp -fh --basename Music"
-    });
+    const music_header_cmd = b.addSystemCommand(&.{ "sh", "-c", "sdef /System/Applications/Music.app | sdp -fh --basename Music" });
     music_header_cmd.setCwd(b.path("."));
-    
-    const music_header_step = b.step("Music.h", "Generate Music.h header from Apple Music app (requires Xcode)");
-    music_header_step.dependOn(&music_header_cmd.step);
 
+    const music_header_step = b.step("Music.h", "Generate Music.h header from Apple Music.app (requires Xcode)");
+    music_header_step.dependOn(&music_header_cmd.step);
 }

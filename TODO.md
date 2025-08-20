@@ -7,7 +7,7 @@
 
 2. [ ] Show song or album cover in the Activity Details
    - Use `Discord_ActivityAssets` with `SetLargeImage()` and `SetLargeUrl()`
-   - Need to fetch album artwork from Apple Music ScriptingBridge
+   - Need to fetch album artwork from Apple Music.app ScriptingBridge
    - Challenges: Requires image hosting/CDN or Apple Music artwork URLs
    - Assets also support `SetSmallImage()` for secondary artwork
 
@@ -17,6 +17,6 @@
    - Need Apple Developer ID certificate for code signing (`codesign`)
    - Sign both the main binary and Discord Social SDK library (`libdiscord_partner_sdk.dylib`)
    - Consider notarization for macOS 10.15+ to avoid "unidentified developer" warnings
-   - May need entitlements for ScriptingBridge access to Apple Music
+   - May need entitlements for ScriptingBridge access to Apple Music.app
    - Current manual approval required: System Settings → Privacy & Security → "Allow Anyway"
    - Alternative: Distribute via Homebrew or package managers that handle signing
