@@ -6,6 +6,57 @@ const musicScriptingBridge = @cImport({
 const Discord = @import("discord_bridge.zig").Discord;
 const version = @import("version");
 
+// Global state for graceful shutdown
+var shutdown_requested: std.atomic.Value(bool) = std.atomic.Value(bool).init(false);
+var discord_client: ?*Discord = null;
+var cleanup_allocator: ?std.mem.Allocator = null;
+var cleanup_last_title: ?*?[]const u8 = null;
+var cleanup_last_state: ?*?[]const u8 = null;
+
+// Signal handler for graceful shutdown
+fn handleShutdownSignal(sig: c_int) callconv(.C) void {
+    const signal_name = switch (sig) {
+        std.posix.SIG.INT => "SIGINT",
+        std.posix.SIG.TERM => "SIGTERM",
+        else => "UNKNOWN",
+    };
+    
+    print("\n🛑 Received {s}, shutting down gracefully...\n", .{signal_name});
+    shutdown_requested.store(true, .seq_cst);
+}
+
+// Cleanup function called during shutdown
+fn performGracefulShutdown() void {
+    print("🧹 Cleaning up resources...\n", .{});
+    
+    // Clear Discord activity
+    if (discord_client) |client| {
+        client.clearActivity() catch |err| {
+            print("Warning: Failed to clear Discord activity: {}\n", .{err});
+        };
+        print("✓ Discord activity cleared\n", .{});
+    }
+    
+    // Clean up allocated memory
+    if (cleanup_allocator) |allocator| {
+        if (cleanup_last_title) |title_ptr| {
+            if (title_ptr.*) |title| {
+                allocator.free(title);
+                title_ptr.* = null;
+            }
+        }
+        if (cleanup_last_state) |state_ptr| {
+            if (state_ptr.*) |state| {
+                allocator.free(state);
+                state_ptr.* = null;
+            }
+        }
+        print("✓ Memory cleaned up\n", .{});
+    }
+    
+    print("👋 Graceful shutdown complete\n", .{});
+}
+
 const Config = struct {
     polling_interval_ms: u32 = 500,
 
@@ -176,6 +227,21 @@ pub fn main() !void {
     print("Press Ctrl+C to exit. Change tracks to test detection.\n", .{});
     print("Polling interval: {}ms\n\n", .{config.polling_interval_ms});
 
+    // Register signal handlers for graceful shutdown
+    const sigint_action = std.posix.Sigaction{
+        .handler = .{ .handler = handleShutdownSignal },
+        .mask = std.posix.empty_sigset,
+        .flags = 0,
+    };
+    const sigterm_action = std.posix.Sigaction{
+        .handler = .{ .handler = handleShutdownSignal },
+        .mask = std.posix.empty_sigset,
+        .flags = 0,
+    };
+    
+    std.posix.sigaction(std.posix.SIG.INT, &sigint_action, null);
+    std.posix.sigaction(std.posix.SIG.TERM, &sigterm_action, null);
+
     // Initialize Discord client
     // Use your application's client ID from Discord Developer Portal
     const discord_client_id: i64 = 1377596915675562064;
@@ -190,7 +256,13 @@ pub fn main() !void {
     var lastTitle: ?[]const u8 = null;
     var lastState: ?[]const u8 = null;
 
-    while (true) {
+    // Set up global cleanup state for signal handlers
+    discord_client = &discord;
+    cleanup_allocator = allocator;
+    cleanup_last_title = &lastTitle;
+    cleanup_last_state = &lastState;
+
+    while (!shutdown_requested.load(.seq_cst)) {
         // Check if Music app is running
         if (musicScriptingBridge.isMusicAppRunning() == 0) {
             if (lastTitle != null) {
@@ -293,4 +365,8 @@ pub fn main() !void {
 
         std.time.sleep(config.polling_interval_ms * std.time.ns_per_ms);
     }
+    
+    // Perform graceful shutdown when exiting main loop
+    performGracefulShutdown();
+    std.process.exit(0);
 }
