@@ -37,6 +37,10 @@ fn performGracefulShutdown() void {
         print("✓ Discord activity cleared\n", .{});
     }
     
+    // Clear ScriptingBridge cache
+    musicScriptingBridge.clearTrackCache();
+    print("✓ ScriptingBridge cache cleared\n", .{});
+    
     // Clean up allocated memory
     if (cleanup_allocator) |allocator| {
         if (cleanup_last_title) |title_ptr| {

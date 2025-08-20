@@ -3,7 +3,7 @@ const std = @import("std");
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
-
+    
     // Discord Social SDK path configuration
     const discord_social_sdk_path = b.option([]const u8, "discord-social-sdk", "Path to Discord Social SDK directory") orelse
         std.posix.getenv("DISCORD_SOCIAL_SDK_PATH") orelse
@@ -66,13 +66,13 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
     
-    exe.root_module.addAnonymousImport("version", .{ .root_source_file = version_file });
-
     // Add the Objective-C bridge source
     exe.addCSourceFile(.{
         .file = b.path("MusicScriptingBridge.m"),
         .flags = &.{"-fobjc-arc"}, // Enable ARC for Objective-C
     });
+    
+    exe.root_module.addAnonymousImport("version", .{ .root_source_file = version_file });
 
     // Add the header include path
     exe.addIncludePath(b.path("."));

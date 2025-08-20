@@ -84,6 +84,7 @@ Reference: https://discord.com/developers/docs/discord-social-sdk/index.html
 - **macOS Security**: Discord Social SDK library requires manual approval in System Settings on first run
 - Consult TODO.md for future plans
 - Use jj (colocated with git) for VCS. Keep in mind that jj leaves git not on any branch, which is normal.
+- Use `pkill` instead of `kill` when killing processes
 
 ### Zig notes
 

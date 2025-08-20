@@ -45,6 +45,7 @@ MusicPlayerState getPlayerState(void);
 double getPlayerPosition(void);
 DetailedTrackInfo getCurrentTrackInfo(void);
 void freeTrackInfo(DetailedTrackInfo* info);
+void clearTrackCache(void);
 
 #ifdef __cplusplus
 }
