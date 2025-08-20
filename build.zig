@@ -158,9 +158,16 @@ pub fn build(b: *std.Build) void {
     integration_test.linkFramework("Cocoa");
     integration_test.linkLibC();
 
+    const memory_test = b.addTest(.{
+        .root_source_file = b.path("tests/memory_test.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+
     const config_test_run = b.addRunArtifact(config_test);
     const music_bridge_test_run = b.addRunArtifact(music_bridge_test);
     const integration_test_run = b.addRunArtifact(integration_test);
+    const memory_test_run = b.addRunArtifact(memory_test);
 
     const test_config_step = b.step("test-config", "Run config tests");
     test_config_step.dependOn(&config_test_run.step);
@@ -171,10 +178,14 @@ pub fn build(b: *std.Build) void {
     const test_integration_step = b.step("test-integration", "Run integration tests");
     test_integration_step.dependOn(&integration_test_run.step);
 
+    const test_memory_step = b.step("test-memory", "Run memory leak tests");
+    test_memory_step.dependOn(&memory_test_run.step);
+
     const test_all_step = b.step("test-all", "Run all tests");
     test_all_step.dependOn(&config_test_run.step);
     test_all_step.dependOn(&music_bridge_test_run.step);
     test_all_step.dependOn(&integration_test_run.step);
+    test_all_step.dependOn(&memory_test_run.step);
 
     // Music.h generation step (requires full Xcode installation)
     const music_header_cmd = b.addSystemCommand(&.{ "sh", "-c", "sdef /System/Applications/Music.app | sdp -fh --basename Music" });

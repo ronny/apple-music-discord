@@ -82,11 +82,17 @@ Reference: https://discord.com/developers/docs/discord-social-sdk/index.html
 - Memory management is handled carefully with proper string cleanup in C bridges
 - Application supports configurable polling intervals via `--interval` CLI flag (default 500ms)
 - **macOS Security**: Discord Social SDK library requires manual approval in System Settings on first run
+- Consult TODO.md for future plans
+
+### Zig notes
+
+- Don't use try in defer
 
 ## Workflow
 
 - Make small incremental changes that can be tested
 - Always accompany code changes with automated tests where possible
+- Always verify new code by running the full test suite, including any newly added tests
 - Prompt to create a jj/git commit when sensible
 - Never run jj or git commands except for querying
 
@@ -114,5 +120,3 @@ zig build test-all  # Run all tests (recommended)
 ```
 
 Tests require Apple Music to be available for full coverage of music bridge functionality.
-
-- Consult TODO.md for future plans

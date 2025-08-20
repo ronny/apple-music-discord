@@ -139,8 +139,17 @@ fn printTrackInfo() void {
 }
 
 pub fn main() !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
+    var gpa = std.heap.GeneralPurposeAllocator(.{
+        .safety = true,
+        .never_unmap = true,
+        .retain_metadata = true,
+    }){};
+    defer {
+        const leaked = gpa.deinit();
+        if (leaked == .leak) {
+            print("⚠️  Memory leaks detected!\n", .{});
+        }
+    }
     const allocator = gpa.allocator();
 
     const config = Config.parseArgs(allocator) catch |err| {
@@ -199,23 +208,20 @@ pub fn main() !void {
             continue;
         }
 
-        // Check if track or state changed
-        var currentTitle: ?[]const u8 = null;
-        if (track.title) |title| {
+        // Get current track title and player state (without allocating yet)
+        const currentTitleStr: ?[]const u8 = if (track.title) |title| blk: {
             const len = std.mem.len(title);
-            currentTitle = allocator.dupe(u8, title[0..len]) catch null;
-        }
+            break :blk title[0..len];
+        } else null;
 
-        // Get current player state
         const state: PlayerState = @enumFromInt(musicScriptingBridge.getPlayerState());
         const currentStateStr = state.toString();
-        const currentState: ?[]const u8 = allocator.dupe(u8, currentStateStr) catch null;
 
         const trackChanged = blk: {
-            if (lastTitle == null and currentTitle != null) break :blk true;
-            if (lastTitle != null and currentTitle == null) break :blk true;
+            if (lastTitle == null and currentTitleStr != null) break :blk true;
+            if (lastTitle != null and currentTitleStr == null) break :blk true;
             if (lastTitle) |last| {
-                if (currentTitle) |current| {
+                if (currentTitleStr) |current| {
                     break :blk !std.mem.eql(u8, last, current);
                 }
                 break :blk true;
@@ -224,32 +230,27 @@ pub fn main() !void {
         };
 
         const stateChanged = blk: {
-            if (lastState == null and currentState != null) break :blk true;
-            if (lastState != null and currentState == null) break :blk true;
+            if (lastState == null and currentStateStr.len > 0) break :blk true;
             if (lastState) |last| {
-                if (currentState) |current| {
-                    break :blk !std.mem.eql(u8, last, current);
-                }
-                break :blk true;
+                break :blk !std.mem.eql(u8, last, currentStateStr);
             }
-            break :blk false;
+            break :blk true; // First time, no lastState
         };
 
         if (trackChanged or stateChanged) {
             if (trackChanged) {
                 if (lastTitle) |title| allocator.free(title);
-                lastTitle = currentTitle;
+                lastTitle = if (currentTitleStr) |title| allocator.dupe(u8, title) catch null else null;
                 print("🔄 Track changed: ", .{});
                 printTrackInfo();
             } else {
                 // Only state changed
-                if (currentTitle) |title| allocator.free(title);
                 print("🔄 State changed: ", .{});
                 printTrackInfo();
             }
 
             if (lastState) |old_state| allocator.free(old_state);
-            lastState = currentState;
+            lastState = allocator.dupe(u8, currentStateStr) catch null;
 
             // Update Discord activity (or clear if stopped)
             if (state == .stopped) {
@@ -258,11 +259,6 @@ pub fn main() !void {
                     print("Warning: Failed to clear Discord activity: {}\n", .{err});
                 };
             } else {
-                const title_str = if (track.title) |t| blk: {
-                    const len = std.mem.len(t);
-                    break :blk t[0..len];
-                } else null;
-
                 const artist_str = if (track.artist) |a| blk: {
                     const len = std.mem.len(a);
                     break :blk a[0..len];
@@ -271,14 +267,10 @@ pub fn main() !void {
                 // Get current player position for accurate timestamps
                 const player_position = musicScriptingBridge.getPlayerPosition();
 
-                discord.updateActivity(title_str, artist_str, currentStateStr, player_position, track.duration) catch |err| {
+                discord.updateActivity(currentTitleStr, artist_str, currentStateStr, player_position, track.duration) catch |err| {
                     print("Warning: Failed to update Discord activity: {}\n", .{err});
                 };
             }
-        } else {
-            // No changes, clean up temporary allocations
-            if (currentTitle) |title| allocator.free(title);
-            if (currentState) |cur_state| allocator.free(cur_state);
         }
 
         // Run Discord callbacks to process events
