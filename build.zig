@@ -184,4 +184,5 @@ pub fn build(b: *std.Build) void {
     
     const music_header_step = b.step("Music.h", "Generate Music.h header from Apple Music app (requires Xcode)");
     music_header_step.dependOn(&music_header_cmd.step);
+
 }

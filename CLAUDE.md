@@ -5,7 +5,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Common Build Commands
 
 ### Building
-- `zig build` - Build the main executable
+- `zig build` - Build the main executable (Debug mode, uses Discord Social SDK debug library)
+- `zig build -Doptimize=ReleaseFast` - Build release version (uses Discord Social SDK release library)
 - `zig build run` - Build and run the application
 - `zig build Music.h` - Generate Music.h header from Apple Music app (requires Xcode)
 

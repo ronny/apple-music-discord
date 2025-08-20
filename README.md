@@ -30,11 +30,19 @@ Extract to `$HOME/src/discord_social_sdk` or specify a custom path during build.
 ### Building the Application
 
 ```sh
-# Build with Discord Social SDK (default location: $HOME/src/discord_social_sdk)
+# Debug build with default location of Discord Social SDK of $HOME/src/discord_social_sdk
+# and lib/debug for the dynamic lib.
 zig build
 
-# Build with custom Discord Social SDK location
+# Release build with default location of Discord Social SDK of $HOME/src/discord_social_sdk
+# and lib/release for the dynamic lib.
+zig build -Doptimize=ReleaseFast
+
+# Build with custom Discord Social SDK location and lib/debug
 zig build -Ddiscord-social-sdk=/path/to/discord_social_sdk
+
+# Build with custom Discord Social SDK location and lib/release
+zig build -Ddiscord-social-sdk=/path/to/discord_social_sdk -Doptimize=ReleaseFast
 ```
 
 `Music.h` is generated based on the currently present `Apple Music.app`, so it's probably version specific.
@@ -85,7 +93,11 @@ zig build test-integration
 ### Build Options
 - `-Ddiscord-social-sdk=<path>` - Specify Discord Social SDK location
 - `-Dtarget=<target>` - Cross-compilation target
-- `-Doptimize=<mode>` - Optimization mode (Debug, ReleaseSafe, ReleaseFast, ReleaseSmall)
+- `-Doptimize=<mode>` - Optimization mode (Debug uses `lib/debug/`, Release modes use `lib/release/`)
+  - `Debug` (default) - Uses Discord Social SDK debug library
+  - `ReleaseFast` - Uses Discord Social SDK release library (recommended for distribution)
+  - `ReleaseSafe` - Uses Discord Social SDK release library with safety checks
+  - `ReleaseSmall` - Uses Discord Social SDK release library optimized for size
 
 ## Troubleshooting
 
