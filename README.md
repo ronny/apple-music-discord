@@ -16,6 +16,7 @@ Optional:
 
 Download the Discord Social SDK 1.5 from:
 https://discord.com/developers/applications/YOUR_APP_ID/social-sdk/downloads
+(you need to replace YOUR_APP_ID with your actual Discord application ID, see below to set one up)
 
 Extract to `$HOME/src/discord_social_sdk` or specify a custom path during build.
 
@@ -45,26 +46,27 @@ export DISCORD_APP_ID=your_application_id_here
 ### Building the Application
 
 ```sh
-# Set your Discord App ID (required)
+# Set your Discord App ID (if you don't want to type it every time)
 export DISCORD_APP_ID=1234567890123456789
 
 # Debug build with default location of Discord Social SDK of $HOME/src/discord_social_sdk
 # and lib/debug for the dynamic lib.
-DISCORD_APP_ID=your_app_id zig build
+DISCORD_APP_ID=... zig build
 
 # Release build with default location of Discord Social SDK of $HOME/src/discord_social_sdk
 # and lib/release for the dynamic lib.
-DISCORD_APP_ID=your_app_id zig build -Doptimize=ReleaseFast
+DISCORD_APP_ID=... zig build -Doptimize=ReleaseFast
 
 # Build with custom Discord Social SDK location and lib/debug
-DISCORD_APP_ID=your_app_id zig build -Ddiscord-social-sdk=/path/to/discord_social_sdk
+DISCORD_APP_ID=... zig build -Ddiscord-social-sdk=/path/to/discord_social_sdk
 
 # Build with custom Discord Social SDK location and lib/release
-DISCORD_APP_ID=your_app_id zig build -Ddiscord-social-sdk=/path/to/discord_social_sdk -Doptimize=ReleaseFast
+DISCORD_APP_ID=... zig build -Ddiscord-social-sdk=/path/to/discord_social_sdk -Doptimize=ReleaseFast
 ```
 
-`Music.h` is generated based on the currently present `Apple Music.app`, so it's probably version specific.
-If it's out of sync, you can regenerate it by running `zig build Music.h`.
+
+`Music.h` is generated based on the currently present `Apple Music.app`, so it's probably
+version specific. If it's out of sync, you can regenerate it by running `zig build Music.h`.
 
 ```sh
 # Generate Music.h header (requires full Xcode installation)
@@ -74,7 +76,7 @@ zig build Music.h
 ### Running the Application
 ```sh
 # Run with default settings (must build first with DISCORD_APP_ID)
-DISCORD_APP_ID=your_app_id zig build run
+DISCORD_APP_ID=... zig build run
 
 # Or run the built binary directly
 ./zig-out/bin/music-discord-presence

@@ -148,7 +148,7 @@ test "String handling safety" {
 test "Multiple calls consistency" {
     // Test that multiple calls return consistent results
     const state1 = c.getPlayerState();
-    std.time.sleep(10 * std.time.ns_per_ms); // Wait 10ms
+    std.Thread.sleep(10 * std.time.ns_per_ms); // Wait 10ms
     const state2 = c.getPlayerState();
     
     // States should be the same or reasonable transitions

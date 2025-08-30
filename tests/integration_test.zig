@@ -64,8 +64,8 @@ test "Format duration function" {
     const allocator = arena.allocator();
     
     // Capture output by redirecting to a buffer
-    var output_buf = std.ArrayList(u8).init(allocator);
-    defer output_buf.deinit();
+    var output_buf = std.ArrayList(u8){};
+    defer output_buf.deinit(allocator);
     
     // Test various durations
     const test_cases = [_]struct { input: f64, expected_contains: []const u8 }{
