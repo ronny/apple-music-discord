@@ -82,27 +82,27 @@ const DiscordClient = struct {
             defer self.allocator.free(url_buffer);
             
             // Create search query from title and artist
-            var search_query = std.ArrayList(u8).init(self.allocator);
-            defer search_query.deinit();
+            var search_query = std.ArrayList(u8){};
+            defer search_query.deinit(self.allocator);
             
             if (title) |t| {
-                try search_query.appendSlice(t);
+                try search_query.appendSlice(self.allocator, t);
             }
             if (artist) |a| {
-                if (title != null) try search_query.appendSlice(" ");
-                try search_query.appendSlice(a);
+                if (title != null) try search_query.appendSlice(self.allocator, " ");
+                try search_query.appendSlice(self.allocator, a);
             }
             
             // URL encode the search query (basic encoding for spaces)
-            var encoded_query = std.ArrayList(u8).init(self.allocator);
-            defer encoded_query.deinit();
+            var encoded_query = std.ArrayList(u8){};
+            defer encoded_query.deinit(self.allocator);
             
             for (search_query.items) |char| {
                 switch (char) {
-                    ' ' => try encoded_query.appendSlice("%20"),
-                    '&' => try encoded_query.appendSlice("%26"),
-                    '?' => try encoded_query.appendSlice("%3F"),
-                    else => try encoded_query.append(char),
+                    ' ' => try encoded_query.appendSlice(self.allocator, "%20"),
+                    '&' => try encoded_query.appendSlice(self.allocator, "%26"),
+                    '?' => try encoded_query.appendSlice(self.allocator, "%3F"),
+                    else => try encoded_query.append(self.allocator, char),
                 }
             }
             

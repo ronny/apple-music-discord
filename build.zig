@@ -72,9 +72,11 @@ pub fn build(b: *std.Build) void {
 
     const exe = b.addExecutable(.{
         .name = "music-discord-presence",
-        .root_source_file = b.path("main.zig"),
-        .target = target,
-        .optimize = optimize,
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("main.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
     });
 
     // Add the Objective-C bridge source
@@ -169,9 +171,11 @@ pub fn build(b: *std.Build) void {
 
     // Add test executable
     const test_exe = b.addTest(.{
-        .root_source_file = b.path("main.zig"),
-        .target = target,
-        .optimize = optimize,
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("main.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
     });
 
     // Add the same C source and frameworks for tests
@@ -191,15 +195,19 @@ pub fn build(b: *std.Build) void {
 
     // Add individual test files
     const config_test = b.addTest(.{
-        .root_source_file = b.path("tests/config_test.zig"),
-        .target = target,
-        .optimize = optimize,
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tests/config_test.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
     });
 
     const music_bridge_test = b.addTest(.{
-        .root_source_file = b.path("tests/music_bridge_test.zig"),
-        .target = target,
-        .optimize = optimize,
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tests/music_bridge_test.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
     });
     music_bridge_test.addCSourceFile(.{
         .file = b.path("MusicScriptingBridge.m"),
@@ -212,9 +220,11 @@ pub fn build(b: *std.Build) void {
     music_bridge_test.linkLibC();
 
     const integration_test = b.addTest(.{
-        .root_source_file = b.path("tests/integration_test.zig"),
-        .target = target,
-        .optimize = optimize,
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tests/integration_test.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
     });
     integration_test.addCSourceFile(.{
         .file = b.path("MusicScriptingBridge.m"),
@@ -227,9 +237,11 @@ pub fn build(b: *std.Build) void {
     integration_test.linkLibC();
 
     const memory_test = b.addTest(.{
-        .root_source_file = b.path("tests/memory_test.zig"),
-        .target = target,
-        .optimize = optimize,
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tests/memory_test.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
     });
 
     const config_test_run = b.addRunArtifact(config_test);

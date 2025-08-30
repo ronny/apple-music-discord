@@ -25,7 +25,7 @@ This is a macOS-only application that listens to Apple Music.app playback and up
 presence in Discord.app using [Discord Social SDK (Standalone
 C++)](https://discord.com/developers/docs/discord-social-sdk/getting-started/using-c++).
 
-Zig 0.14.x is used as a build tool as well as the main compiler for all Objective-C, C, and C++
+Zig 0.15.x is used as a build tool as well as the main compiler for all Objective-C, C, and C++
 code. Clang, GCC, and other compilers should be avoided unless absolutely necessary.
 
 ### Core Architecture Components

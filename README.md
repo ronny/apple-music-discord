@@ -6,7 +6,7 @@ Discord.app running locally.
 ## Development Requirements
 
 - **macOS** (tested on macOS 15.6+)
-- **Zig compiler** (tested with 0.14.1) https://ziglang.org
+- **Zig compiler** (tested with 0.15.1) https://ziglang.org
 - **Discord Social SDK** see below
 
 Optional:

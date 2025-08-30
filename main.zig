@@ -14,7 +14,7 @@ var cleanup_last_title: ?*?[]const u8 = null;
 var cleanup_last_state: ?*?[]const u8 = null;
 
 // Signal handler for graceful shutdown
-fn handleShutdownSignal(sig: c_int) callconv(.C) void {
+fn handleShutdownSignal(sig: c_int) callconv(.c) void {
     const signal_name = switch (sig) {
         std.posix.SIG.INT => "SIGINT",
         std.posix.SIG.TERM => "SIGTERM",
@@ -239,12 +239,12 @@ pub fn main() !void {
     // Register signal handlers for graceful shutdown
     const sigint_action = std.posix.Sigaction{
         .handler = .{ .handler = handleShutdownSignal },
-        .mask = std.posix.empty_sigset,
+        .mask = std.mem.zeroes(std.posix.sigset_t),
         .flags = 0,
     };
     const sigterm_action = std.posix.Sigaction{
         .handler = .{ .handler = handleShutdownSignal },
-        .mask = std.posix.empty_sigset,
+        .mask = std.mem.zeroes(std.posix.sigset_t),
         .flags = 0,
     };
 
@@ -281,7 +281,7 @@ pub fn main() !void {
                 lastState = null;
             }
             discord.runCallbacks();
-            std.time.sleep(2 * std.time.ns_per_s); // Wait 2 seconds
+            std.Thread.sleep(2 * std.time.ns_per_s); // Wait 2 seconds
             continue;
         }
 
@@ -298,7 +298,7 @@ pub fn main() !void {
                 if (lastState) |old_state| allocator.free(old_state);
                 lastState = null;
             }
-            std.time.sleep(1 * std.time.ns_per_s);
+            std.Thread.sleep(1 * std.time.ns_per_s);
             continue;
         }
 
@@ -337,7 +337,7 @@ pub fn main() !void {
                 lastTitle = if (currentTitleStr) |title| allocator.dupe(u8, title) catch null else null;
                 print("🔄 Track changed: ", .{});
                 printTrackInfo();
-                
+
                 // Debug: Print IDs for URL construction
                 if (track.persistentID) |pid| {
                     const pid_len = std.mem.len(pid);
@@ -377,7 +377,7 @@ pub fn main() !void {
         // Run Discord callbacks to process events
         discord.runCallbacks();
 
-        std.time.sleep(config.polling_interval_ms * std.time.ns_per_ms);
+        std.Thread.sleep(config.polling_interval_ms * std.time.ns_per_ms);
     }
 
     // Perform graceful shutdown when exiting main loop

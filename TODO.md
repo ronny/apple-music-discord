@@ -4,18 +4,26 @@
 
 2. [x] Add version based on yyyymmdd-commithash
 
-3. [ ] Link song to Apple Music in the Activity Details
-   - Use `Discord_Activity_SetDetailsUrl()` to make song title clickable
-   - Options: `apple-music://` deep links or Apple Music web URLs
-   - Could also use `Discord_Activity_SetStateUrl()` for artist links
+3. [x] Link song to Apple Music in the Activity Details (hacky version, via search)
 
-4. [ ] Show song or album cover in the Activity Details
+4. [ ] Create an AppKit GUI app wrapper around the CLI
+    - Create a new Xcode project for the GUI app
+    - Use the CLI app as a dependency
+    - Implement the GUI using AppKit
+    - Add necessary UI elements for user interaction
+    - Handle user input and update the CLI app accordingly
+    - Stretch goal 1: automatically run the app at startup
+    - Stretch goal 2: menu bar item
+    - Stretch goal 3: hide app icon in Dock
+    - Stretch goal 4: show album cover like Sleeve.app
+
+5. [ ] Show song or album cover in the Activity Details
    - Use `Discord_ActivityAssets` with `SetLargeImage()` and `SetLargeUrl()`
    - Need to fetch album artwork from Apple Music.app ScriptingBridge
    - Challenges: Requires image hosting/CDN or Apple Music artwork URLs
    - Assets also support `SetSmallImage()` for secondary artwork
 
-5. [ ] Figure out requirements (signing, etc) to be able to build a **static** binary that can be
+6. [ ] Figure out requirements (signing, etc) to be able to build a **static** binary that can be
        distributed to users (doesn't have to be in the App Store), just enough to not trigger macOS's
        security popups. Also check Discord requirements if any for statically linking the SDK and
        distributing the binary.
