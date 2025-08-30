@@ -20,56 +20,36 @@ pub fn build(b: *std.Build) void {
         std.posix.getenv("DISCORD_SOCIAL_SDK_PATH") orelse
         b.pathJoin(&.{ std.posix.getenv("HOME") orelse ".", "src", "discord_social_sdk" });
 
-    // Generate version information
-    const gen_version = b.addWriteFiles();
-    const build_mode_str = @tagName(optimize);
-    const debug_prefix = if (optimize == .Debug) "debug-" else "";
-    const version_file = gen_version.add("version.zig", b.fmt(
-        \\// Generated at build time
-        \\const std = @import("std");
-        \\
-        \\// Version format: [debug-]YYYYMMDD-shorthash
-        \\pub fn getVersion(allocator: std.mem.Allocator) ![]const u8 {{
-        \\    // Get short commit hash
-        \\    const hash_result = std.process.Child.run(.{{
-        \\        .allocator = allocator,
-        \\        .argv = &.{{ "git", "rev-parse", "--short", "HEAD" }},
-        \\    }}) catch |err| {{
-        \\        std.debug.print("Warning: Could not get commit hash: {{}}\n", .{{err}});
-        \\        return allocator.dupe(u8, "{s}unknown-unknown");
-        \\    }};
-        \\    defer allocator.free(hash_result.stdout);
-        \\    defer allocator.free(hash_result.stderr);
-        \\
-        \\    if (hash_result.term != .Exited or hash_result.term.Exited != 0) {{
-        \\        return allocator.dupe(u8, "{s}unknown-unknown");
-        \\    }}
-        \\
-        \\    const hash = std.mem.trim(u8, hash_result.stdout, " \t\n\r");
-        \\
-        \\    // Get commit date in UTC using ISO format
-        \\    const date_result = std.process.Child.run(.{{
-        \\        .allocator = allocator,
-        \\        .argv = &.{{ "git", "show", "-s", "--format=%cd", "--date=format:%Y%m%d", "HEAD" }},
-        \\    }}) catch |err| {{
-        \\        std.debug.print("Warning: Could not get commit date: {{}}\n", .{{err}});
-        \\        return std.fmt.allocPrint(allocator, "{s}unknown-{{s}}", .{{hash}});
-        \\    }};
-        \\    defer allocator.free(date_result.stdout);
-        \\    defer allocator.free(date_result.stderr);
-        \\
-        \\    if (date_result.term != .Exited or date_result.term.Exited != 0) {{
-        \\        return std.fmt.allocPrint(allocator, "{s}unknown-{{s}}", .{{hash}});
-        \\    }}
-        \\
-        \\    const date = std.mem.trim(u8, date_result.stdout, " \t\n\r");
-        \\    return std.fmt.allocPrint(allocator, "{s}{{s}}-{{s}}", .{{date, hash}});
-        \\}}
-        \\
-        \\pub const build_mode = "{s}";
-        \\
-    , .{ debug_prefix, debug_prefix, debug_prefix, debug_prefix, debug_prefix, build_mode_str }));
-
+    // Get git info at build time
+    const git_hash = std.mem.trim(u8, b.run(&.{ "git", "rev-parse", "--short", "HEAD" }), " \t\n\r");
+    const git_date = std.mem.trim(u8, b.run(&.{ "git", "show", "-s", "--format=%cd", "--date=format:%Y%m%d", "HEAD" }), " \t\n\r");
+    
+    // Try to get git tag first, then fallback to branch name
+    // Since b.run() fails the build on command failure, we'll try tag first as a separate step
+    const git_ref = blk: {
+        // Check if we have a tag by testing git describe command
+        const result = std.process.Child.run(.{
+            .allocator = b.allocator,
+            .argv = &.{ "git", "describe", "--tags", "--exact-match", "HEAD" },
+        }) catch {
+            // Command failed, use branch name
+            const branch = b.run(&.{ "git", "rev-parse", "--abbrev-ref", "HEAD" });
+            break :blk std.mem.trim(u8, branch, " \t\n\r");
+        };
+        defer b.allocator.free(result.stdout);
+        defer b.allocator.free(result.stderr);
+        
+        if (result.term == .Exited and result.term.Exited == 0) {
+            // Tag found, use it (duplicate the string since result will be freed)
+            const tag = std.mem.trim(u8, result.stdout, " \t\n\r");
+            break :blk b.allocator.dupe(u8, tag) catch "unknown";
+        } else {
+            // No tag, use branch name
+            const branch = b.run(&.{ "git", "rev-parse", "--abbrev-ref", "HEAD" });
+            break :blk std.mem.trim(u8, branch, " \t\n\r");
+        }
+    };
+    
     const exe = b.addExecutable(.{
         .name = "music-discord-presence",
         .root_module = b.createModule(.{
@@ -85,11 +65,13 @@ pub fn build(b: *std.Build) void {
         .flags = &.{"-fobjc-arc"}, // Enable ARC for Objective-C
     });
 
-    exe.root_module.addAnonymousImport("version", .{ .root_source_file = version_file });
-
-    // Add Discord app ID as a build option
+    // Add build options including version info
     const options = b.addOptions();
     options.addOption(i64, "discord_app_id", discord_app_id);
+    options.addOption([]const u8, "git_hash", git_hash);
+    options.addOption([]const u8, "git_date", git_date);
+    options.addOption([]const u8, "git_ref", git_ref);
+    options.addOption(std.builtin.OptimizeMode, "optimize_mode", optimize);
     exe.root_module.addOptions("config", options);
 
     // Add the header include path

@@ -4,7 +4,7 @@ const musicScriptingBridge = @cImport({
     @cInclude("MusicScriptingBridge.h");
 });
 const Discord = @import("discord_bridge.zig").Discord;
-const version = @import("version");
+const version = @import("version.zig");
 
 // Global state for graceful shutdown
 var shutdown_requested: std.atomic.Value(bool) = std.atomic.Value(bool).init(false);
