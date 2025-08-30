@@ -353,9 +353,14 @@ pub fn main() !void {
             if (lastState) |old_state| allocator.free(old_state);
             lastState = allocator.dupe(u8, currentStateStr) catch null;
 
-            // Update Discord activity (or clear if stopped)
+            // Update Discord activity (or clear if stopped/paused)
             if (state == .stopped) {
                 print("⏹️  Player stopped - clearing Discord activity\n", .{});
+                discord.clearActivity() catch |err| {
+                    print("Warning: Failed to clear Discord activity: {}\n", .{err});
+                };
+            } else if (state == .paused) {
+                print("⏸️  Player paused - clearing Discord activity\n", .{});
                 discord.clearActivity() catch |err| {
                     print("Warning: Failed to clear Discord activity: {}\n", .{err});
                 };
