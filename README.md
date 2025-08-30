@@ -3,6 +3,23 @@
 A macOS application that listens to Apple Music.app and updates the user's rich presence in
 Discord.app running locally.
 
+## Status
+
+The app works with macOS Sequoia. By "works" I mean it's good enough for me. The rich presence in
+Discord has the song title and artist name, song duration and progress, but there's no album art,
+and there's no link to the song on Apple Music, the link goes to the generic Apple Music search page
+with the artist name and song title. Apple sure made it really difficult to do this 😞
+
+If you want a copy of the app, then you'd need to build it yourself, I'm not providing precompiled
+binaries.
+
+The app is currently command line only, there's no GUI. I might add a GUI later if I can be bothered
+and have time. There's no startup script, you need to run it manually (maybe in a tmux or zellij
+session). There's no process supervision, you need to restart it manually when it crashes.
+
+Bug reports and pull requests welcome, but unless it's a serious issue and easily reproducible, it
+will probably take me a while to fix.
+
 ## Development Requirements
 
 - **macOS** (tested on macOS 15.6+)
@@ -41,7 +58,8 @@ Before building, you need to create a Discord application and get your Applicati
 export DISCORD_APP_ID=your_application_id_here
 ```
 
-**⚠️ Required**: The `DISCORD_APP_ID` environment variable must be set at build time. The build will fail if not provided.
+**⚠️ Required**: The `DISCORD_APP_ID` environment variable must be set at build time. The build will
+fail if not provided.
 
 ### Building the Application
 
